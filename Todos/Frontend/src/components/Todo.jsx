@@ -1,39 +1,59 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const Todo = () => {
-  const [task, setTask] = useState({ title: "", description: "", dueDate: "", category: "non-urgent" });
+  const [task, setTask] = useState({ id: null, title: "", description: "", dueDate: "", category: "non-urgent" });
   const [todos, setTodos] = useState([]);
 
-  const addTask = async(e) => {
-    e.preventDefault();
-    if (task.title.trim() === "") return;
-    setTodos([...todos, { ...task, id: Date.now() }]);
-    setTask({ title: "", description: "", dueDate: "", category: "non-urgent" });
+  useEffect(() => {
+    fetchTodos();
+  }, []);
 
-    try{
-      const res=await axios.post('http://localhost:5004/addTodo',task);
-      console.log(res,'res');
-
-    }catch(err){
+  const fetchTodos = async () => {
+    try {
+      const res = await axios.get("http://localhost:5004/todos");
+      console.log(res);
+      setTodos(res.data.todos);
+    } catch (err) {
       console.log(err);
     }
   };
 
-  const deleteTask = (id) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+  const addOrUpdateTask = async (e) => {
+    e.preventDefault();
+    if (task.title.trim() === "") return;
+    
+    try {
+      if (task.id) {
+        await axios.put(`http://localhost:5004/updateTodo/${task.id}`, task);
+      } else {
+        const res = await axios.post("http://localhost:5004/addTodo", task);
+        setTodos([...todos, res.data]);
+      }
+      fetchTodos();
+      setTask({ id: null, title: "", description: "", dueDate: "", category: "non-urgent" });
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  const editTask = (id) => {
-    const todoToEdit = todos.find((todo) => todo.id === id);
-    setTask(todoToEdit);
-    setTodos(todos.filter((todo) => todo.id !== id));
+  const deleteTask = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5004/deleteTodo/${id}`);
+      fetchTodos();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const editTask = (todo) => {
+    setTask(todo);
   };
 
   return (
     <div className="max-w-md mx-auto mt-10 p-5 bg-white shadow-lg rounded-lg">
       <h2 className="text-xl font-bold mb-4">To-Do List</h2>
-      <form onSubmit={addTask} className="flex flex-col gap-2">
+      <form onSubmit={addOrUpdateTask} className="flex flex-col gap-2">
         <input
           type="text"
           value={task.title}
@@ -67,8 +87,8 @@ const Todo = () => {
         </button>
       </form>
       <ul className="mt-4">
-        {todos.map((todo) => (
-          <li key={todo.id} className="p-2 border-b border-gray-200 flex justify-between items-center">
+        {todos?.map((todo) => (
+          <li key={todo._id} className="p-2 border-b border-gray-200 flex justify-between items-center">
             <div>
               <strong>{todo.title}</strong>
               <p className="text-sm">{todo.description}</p>
@@ -78,8 +98,8 @@ const Todo = () => {
               </span>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => editTask(todo.id)} className="text-yellow-500">Edit</button>
-              <button onClick={() => deleteTask(todo.id)} className="text-red-500">Delete</button>
+              <button onClick={() => editTask(todo)} className="text-yellow-500">Edit</button>
+              <button onClick={() => deleteTask(todo._id)} className="text-red-500">Delete</button>
             </div>
           </li>
         ))}
