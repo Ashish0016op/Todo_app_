@@ -178,7 +178,7 @@ const Todo = () => {
             <div>
               <strong>{todo.title}</strong>
               <p className="text-sm">{todo.description}</p>
-              {todo.dueDate && <p className="text-xs text-gray-500">Due: {todo.dueDate}</p>}
+              {todo.date && <p className="text-xs text-gray-500">Date: {todo.date}</p>}
               <span className={`text-xs font-bold ${todo.category === "urgent" ? "text-red-500" : "text-green-500"}`}>
                 {todo.category}
               </span>

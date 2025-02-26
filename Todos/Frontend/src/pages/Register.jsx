@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { Link } from "react-router-dom";
 
 const Register = () => {
@@ -25,6 +25,7 @@ const Register = () => {
       const res = await axios.post("http://localhost:5004/postData", formdata);
       console.log("Response:", res);
       if(res.status==200){
+        console.log('hello')
         toast.success("Registered Successfully");
       }else if(res.status==201){
         toast.error("User Registerd Already!")
@@ -82,6 +83,7 @@ const Register = () => {
         </div>
         
       </form>
+      <Toaster position="top-center" reverseOrder={false} />
     </div>
   );
 };
