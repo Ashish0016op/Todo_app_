@@ -60,7 +60,7 @@ const getAllTodo = async (req, res) => {
 
 const addTodo = async (req, res) => {
   try {
-    const { title, description, dueDate, category, id } = req.body;
+    const { title, description, dueDate, category } = req.body;
     console.log("req", req.body);
     const Date = dueDate;
     if (!title) {
@@ -68,7 +68,6 @@ const addTodo = async (req, res) => {
     }
 
     const newTodo = await todosModel.create({
-      id: id,
       title: title,
       description: description,
       date: Date,
@@ -87,15 +86,16 @@ const addTodo = async (req, res) => {
 const updateTask = async (req, res) => {
   try {
     const id = req.params.id;
-    const { title, description, dueDate, category } = req.body;
-    console.log("req", req.body);
+    const { title, description, dueDate, category,_id } = req.body;
+    console.log("req update is", req.body,id);
     if (!id) {
       return res.status(400).json({ message: "id is required" });
     }
-    const todo = await todosModel.findOne({ id });
+    const todo = await todosModel.findOne({ _id });
+    console.log("todo", todo);
     if (todo) {
       const updateTodo = await todosModel.updateOne(
-        { id },
+        { _id },
         { $set: { title, description, date: dueDate, category } }
       );
       res
