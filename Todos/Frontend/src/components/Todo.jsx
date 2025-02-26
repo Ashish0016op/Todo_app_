@@ -7,20 +7,24 @@ const Todo = () => {
     title: "", 
     description: "", 
     dueDate: "", 
-    category: "non-urgent" 
+    category: "non-urgent",
+    userId: localStorage.getItem('login')
   });
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const BASE_URL = "http://localhost:5004";
+
   useEffect(() => {
     fetchTodos();
   }, []);
+
   const fetchTodos = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get(`${BASE_URL}/todos`);
+      const userId = localStorage.getItem('login');
+      const res = await axios.get(`${BASE_URL}/todos/${userId}`);
       setTodos(res.data.todos);
     } catch (err) {
       setError("Failed to fetch todos");
@@ -29,18 +33,21 @@ const Todo = () => {
       setLoading(false);
     }
   };
+
   const addTask = async (taskData) => {
     try {
+      const userId = localStorage.getItem('login');
       const newTask = {
         title: taskData.title,
         description: taskData.description,
         dueDate: taskData.dueDate,
-        category: taskData.category
+        category: taskData.category,
+        userId: userId
       };
   
       const response = await axios.post(`${BASE_URL}/addTodo`, newTask);
   
-      if (response.data && response.data.todo) { // Ensure correct structure
+      if (response.data && response.data.todo) {
         setTodos(prevTodos => [...prevTodos, response.data.todo]);
       } else {
         console.error("Unexpected response structure:", response.data);
@@ -56,24 +63,24 @@ const Todo = () => {
   
   const updateTask = async (taskData) => {
     try {
+      const userId = localStorage.getItem('login');
       const updatedTask = {
         _id: taskData.id,
         title: taskData.title,
         description: taskData.description,
         dueDate: taskData.dueDate,
         category: taskData.category,
+        userId: userId
       };
   
       const response = await axios.put(`${BASE_URL}/updateTodo/${taskData.id}`, updatedTask);
   
-      // Update the todos state immediately with the updated task
       if (response.data) {
         setTodos(prevTodos => 
           prevTodos.map(todo => 
             todo._id === taskData.id ? response.data : todo
           )
         );
-        await fetchTodos(); // Fetch fresh data to ensure sync
       }
   
       return true;
@@ -83,7 +90,6 @@ const Todo = () => {
       return false;
     }
   };
-  
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,15 +102,27 @@ const Todo = () => {
       : await addTask(task);
       
     if (success) {
-      setTask({ id: null, title: "", description: "", dueDate: "", category: "non-urgent" });
+      setTask({ 
+        id: null, 
+        title: "", 
+        description: "", 
+        dueDate: "", 
+        category: "non-urgent",
+        userId: localStorage.getItem('login')
+      });
+      await fetchTodos();
     }
     setLoading(false);
   };
+
   const deleteTask = async (id) => {
     setLoading(true);
     setError(null);
     try {
-      await axios.delete(`${BASE_URL}/deleteTodo/${id}`);
+      const userId = localStorage.getItem('login');
+      await axios.delete(`${BASE_URL}/deleteTodo/${id}`, {
+        data: { userId }
+      });
       setTodos(prevTodos => prevTodos.filter(todo => todo._id !== id));
     } catch (err) {
       setError("Failed to delete todo");
@@ -113,15 +131,18 @@ const Todo = () => {
       setLoading(false);
     }
   };
+
   const editTask = (todo) => {
     setTask({
       id: todo._id,
       title: todo.title,
       description: todo.description,
       dueDate: todo.dueDate || "",
-      category: todo.category
+      category: todo.category,
+      userId: localStorage.getItem('login')
     });
   };
+
   return (
     <div className="max-w-md mx-auto mt-10 p-5 bg-white shadow-lg rounded-lg">
       <h2 className="text-xl font-bold mb-4">To-Do List</h2>
@@ -178,7 +199,7 @@ const Todo = () => {
             <div>
               <strong>{todo.title}</strong>
               <p className="text-sm">{todo.description}</p>
-              {todo.date && <p className="text-xs text-gray-500">Date: {todo.date}</p>}
+              {todo.dueDate && <p className="text-xs text-gray-500">Due: {todo.dueDate}</p>}
               <span className={`text-xs font-bold ${todo.category === "urgent" ? "text-red-500" : "text-green-500"}`}>
                 {todo.category}
               </span>

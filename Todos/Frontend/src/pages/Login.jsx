@@ -26,7 +26,10 @@ const Login = () => {
           console.log("Response:", res);
           if(res.status==200){
             toast.success("Login Successfully");
-            localStorage.setItem('login',true)
+            console.log('login',res.data.user._id)
+            // localStorage.setItem('login',true)
+            localStorage.setItem('login',res.data.user._id)
+
             navigate('/')
           }else if(res.status==201){
             toast.error("Error!")
